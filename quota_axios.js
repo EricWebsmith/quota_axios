@@ -29,7 +29,7 @@ async function wait() {
         const sleepInterval = item.score + quotaTime - moment().valueOf();
         console.log('sleeping...', sleepInterval);
         await sleep(sleepInterval);
-        await redisClient.zRemRangeByRank('axios_quota', 0, moment().valueOf() - quotaTime);
+        await redisClient.zRemRangeByScore('axios_quota', 0, moment().valueOf() - quotaTime);
         list = await redisClient.zRangeByScoreWithScores('axios_quota', moment().valueOf() - quotaTime, Infinity);
     }
 
