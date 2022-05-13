@@ -10,7 +10,7 @@ function sleep(time) {
 }
 
 const quota = 5;
-const quotaTime = 20 * 1000;
+const quotaTime = 60 * 1000;
 
 async function wait() {
     if(!redisClient.isOpen){
@@ -27,7 +27,7 @@ async function wait() {
         const index = list.length - quota;
         const item = list[index];
         const sleepInterval = item.score + quotaTime - moment().valueOf();
-        console.log('sleeping...', sleepInterval);
+        console.log('sleeping...', sleepInterval, '=============================================================');
         await sleep(sleepInterval);
         await redisClient.zRemRangeByScore('axios_quota', 0, moment().valueOf() - quotaTime);
         list = await redisClient.zRangeByScoreWithScores('axios_quota', moment().valueOf() - quotaTime, Infinity);
