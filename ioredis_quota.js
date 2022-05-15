@@ -50,9 +50,6 @@ class IoredisQuota {
             throw error;
         }
         let list = results[1][1];
-        //console.log(list);
-            //const results = await pipeline
-        // await redis.zremrangebyscore(this.key, 0, this.now() - this.buffer);
 
         // let list = await redis.zrangebyscore(this.key, this.now() - this.buffer, Infinity, "WITHSCORES");
         while (list && list.length >= this.quota * 2) {
@@ -75,7 +72,6 @@ class IoredisQuota {
     now() {
         return moment().valueOf() + this.#offset;
     }
-
 
     async beforeSleep(sleepMilliseconds) {
         console.log('sleeping...', sleepMilliseconds, '=============================================================');
