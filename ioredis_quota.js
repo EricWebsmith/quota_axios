@@ -23,7 +23,7 @@ class IoredisQuota {
         // use should not modify this.
         this.#offset = 0;
         // 2 milliseconds buffer
-        this.buffer = 5;
+        this.buffer = 20;
     }
 
     /**
@@ -37,24 +37,38 @@ class IoredisQuota {
         const system_now = moment().valueOf();
         const redis_now = +redis_now_arr[0] * 1000 + Math.floor(+redis_now_arr[1] / 1000);
         this.#offset = redis_now - system_now;
+        //console.log('offset', this.#offset);
         // remove onece percall.
-        await redis.zremrangebyscore(this.key, 0, this.now() - this.ttl - this.buffer);
 
-        let list = await redis.zrangebyscore(this.key, this.now() - this.ttl - this.buffer, Infinity);
-        while (list && list.length >= this.quota) {
-            const index = list.length - this.quota;
-            const item = list[index];
+        const results = await redis.pipeline()
+            .zremrangebyscore(this.key, 0, this.now() - this.buffer)
+            .zrangebyscore(this.key, this.now() - this.buffer, Infinity, "WITHSCORES")
+            .exec();
+        let error = results[1][0];
+        if (error) {
+            console.log('err................');
+            throw error;
+        }
+        let list = results[1][1];
+        //console.log(list);
+            //const results = await pipeline
+        // await redis.zremrangebyscore(this.key, 0, this.now() - this.buffer);
 
-            const sleepInterval = item.score + this.ttl - this.now();
+        // let list = await redis.zrangebyscore(this.key, this.now() - this.buffer, Infinity, "WITHSCORES");
+        while (list && list.length >= this.quota * 2) {
+            const index = list.length - this.quota * 2;
+            const item = list[index + 1];
+
+            const sleepInterval = +item + this.buffer - this.now();
             if (sleepInterval > 0) {
                 await this.beforeSleep(sleepInterval);
                 await sleep(sleepInterval);
             }
 
-            list = await redis.zrangebyscore(this.key, this.now() - this.ttl - this.buffer, Infinity);
+            list = await redis.zrangebyscore(this.key, this.now() - this.buffer, Infinity);
         }
 
-        await redis.zadd(this.key, this.now(), v4() );
+        await redis.zadd(this.key, this.now() + this.ttl, v4());
         await redis.quit();
     }
 
