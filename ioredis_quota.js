@@ -20,7 +20,7 @@ class IoredisQuota {
         this.key = key;
         this.quota = quota;
         this.ttl = ttl;
-        // use should not modify this.
+        // user should not modify this.
         this.#offset = 0;
         // 2 milliseconds buffer
         this.buffer = 20;
